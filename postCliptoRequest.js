@@ -1,7 +1,7 @@
 
 const dbClient = require('./requires/initDbClient')
 const twitterClient = require('./requires/initTwitterClient')
-
+require('dotenv').config()
 var origlog = console.log;
 
 console.log = function (obj, ...placeholders) {
@@ -52,16 +52,27 @@ Deadline: ${request.deadline} day(s)
 */
 
       console.log(twitterMessage);
-      return;
+      if (process.env.TWITTER_DISABLED == 'true') return;
 
+      function lockRequest(response, request) {
+        const postId = response && response.data.id || `lowValue-${request.id}`
+        dbClient.requests.update({ id: request.id }, { $set:{ twitterPostId: postId }}, (err, num) => {
+          if(postId == `lowValue-${request.id}`) {
+            console.log(`TwitterPostId ${postId} has too low of a value for a notificaation.`)
+          } else if(num > 0) { console.log(`Tweet post with id ${postId}. Updated request.`); }
+          if(err){ console.log(err); }
+        });
+      }
+      console.log('f')
+      if (process.env.USD_FLOOR > request.valueInUSD) {
+        lockRequest(null, request)
+        return;
+      }
       twitterClient.tweetsV2.createTweet({"text": twitterMessage}).then((response) => {
         console.log(JSON.stringify(response));
         console.log(request.id);
-
-	dbClient.requests.update({ id: request.id }, { $set:{ twitterPostId: response.data.id }}, (err, num) => {
-                if(num > 0) { console.log(`Tweet post with id ${response.data.id}. Updated request.`); }
-  		if(err){ console.log(err); }
-        });
+        lockRequest(response, request)
+	
       });
     });
 })
