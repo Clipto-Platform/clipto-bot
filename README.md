@@ -14,5 +14,8 @@ USD_FLOOR=
 # Set up Crontab (after testing)
 Every 2 minutes check new request and post pending to Twitter
 ```
-*/2 * * * cd /opt/clipto-bot && node getCliptoRequests.js >> /opt/clipto-bot/debug.log && node postCliptoRequest.js >> /opt/clipto-bot/debug.log
+crontab -e
+```
+```
+*/2 * * * * cd /opt/clipto-bot && node getCliptoRequests.js >> /opt/clipto-bot/debug.log && node postCliptoRequest.js >> /opt/clipto-bot/debug.log
 ```
